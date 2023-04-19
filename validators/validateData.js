@@ -1,5 +1,8 @@
 const Joi = require("joi");
 const mongoose = require("mongoose");
+const { getById } = require("../service/dbApi");
+
+const Contact = require("../service/schemas/contact");
 
 const contactValidatePost = Joi.object({
   name: Joi.string().required(),
@@ -15,23 +18,20 @@ const contactValidatePut = Joi.object({
 
 async function validateGetById(req, res, next) {
   const { contactId } = req.params;
-
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     return res.status(400).json({ message: "Not found" });
   }
+  const contact = await getById(contactId);
+  if (!contact) {
+    return res.status(404).json({ message: "Not found" });
+  }
+
   next();
 }
 
-function validatePost(req, res, next) {
+async function validatePost(req, res, next) {
   const body = req.body;
   const { error } = contactValidatePost.validate(body);
-
-  if (error) {
-    return res.status(400).json({
-      message: error.message,
-    });
-  }
-
   let missingField;
 
   if (!body.name) {
@@ -45,6 +45,21 @@ function validatePost(req, res, next) {
   if (missingField) {
     return res.status(400).json({
       message: `Missing required ${missingField} field.`,
+    });
+  }
+
+  const existingContact = await Contact.findOne({
+    $or: [{ email: body.email }],
+  });
+
+  if (existingContact) {
+    return res.status(409).json({
+      message: "Contact with this email already exists.",
+    });
+  }
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
     });
   }
 
