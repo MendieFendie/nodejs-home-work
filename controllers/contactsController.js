@@ -1,4 +1,10 @@
-const { getAll, getById, add, update, remove } = require("../service/dbApi");
+const {
+  getAll,
+  getById,
+  add,
+  update,
+  remove,
+} = require("../service/contactsService");
 
 const listContacts = async (req, res) => {
   try {
@@ -23,8 +29,8 @@ const addContact = async (req, res) => {
     email: email,
     phone: phone,
   };
-  add(contact);
-  res.status(201).json(contact);
+  const data = await add(contact);
+  res.status(201).json(data);
 };
 
 const removeContact = async (req, res) => {
