@@ -1,6 +1,6 @@
 const Joi = require("joi");
 const mongoose = require("mongoose");
-const { getById } = require("../service/dbApi");
+const { getById } = require("../service/contactsService");
 
 const Contact = require("../service/schemas/contact");
 
