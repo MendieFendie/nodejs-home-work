@@ -34,11 +34,11 @@ async function loginController(req, res, next) {
 }
 
 async function logoutController(req, res, next) {
-  const [token] = req.headers.authorization.split(" ");
-
+  const [tokenType, token] = req.headers.authorization.split(" ");
   const user = jwt.decode(token, process.env.JWT_SECRET);
   await logout(user._id);
-  res.status(204).json();
+
+  res.status(204).end();
 }
 
 async function currentUserController(req, res, next) {

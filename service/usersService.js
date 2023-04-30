@@ -26,7 +26,7 @@ const login = async (email) => {
 };
 
 const logout = async (id) => {
-  User.findByIdAndUpdate({ _id: id }, { token: null });
+  await User.findByIdAndUpdate(id, { $unset: { token: 1 } });
 };
 
 const currentUser = async (id) => {
