@@ -1,7 +1,8 @@
 const Joi = require("joi");
-const fs = require("fs/promises");
-const path = require("path");
-const contactsPath = path.join("models", "contacts.json");
+const mongoose = require("mongoose");
+const { getById } = require("../service/contactsService");
+
+const Contact = require("../service/schemas/contact");
 
 const contactValidatePost = Joi.object({
   name: Joi.string().required(),
@@ -17,23 +18,20 @@ const contactValidatePut = Joi.object({
 
 async function validateGetById(req, res, next) {
   const { contactId } = req.params;
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data).filter((elem) => elem.id === contactId);
-  if (contacts.length === 0) {
-    res.status(404).json({ message: "Not found" });
-  } else next();
-}
-
-function validatePost(req, res, next) {
-  const body = req.body;
-  const { error } = contactValidatePost.validate(body);
-
-  if (error) {
-    return res.status(400).json({
-      message: error.message,
-    });
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    return res.status(400).json({ message: "Not found" });
+  }
+  const contact = await getById(contactId);
+  if (!contact) {
+    return res.status(404).json({ message: "Not found" });
   }
 
+  next();
+}
+
+async function validatePost(req, res, next) {
+  const body = req.body;
+  const { error } = contactValidatePost.validate(body);
   let missingField;
 
   if (!body.name) {
@@ -50,17 +48,29 @@ function validatePost(req, res, next) {
     });
   }
 
+  const existingContact = await Contact.findOne({
+    $or: [{ email: body.email }],
+  });
+
+  if (existingContact) {
+    return res.status(409).json({
+      message: "Contact with this email already exists.",
+    });
+  }
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
   next();
 }
 
 async function validateDelete(req, res, next) {
   const { contactId } = req.params;
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data);
-  const contactToDel = contacts.find((elem) => elem.id === contactId);
-  if (!contactToDel) {
-    res.status(404).json({ message: "Not found" });
-    return;
+
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    return res.status(400).json({ message: "Not found" });
   }
   next();
 }
@@ -68,11 +78,8 @@ async function validateDelete(req, res, next) {
 async function validateUpdate(req, res, next) {
   const body = req.body;
   const { contactId } = req.params;
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data).filter((elem) => elem.id === contactId);
-  if (contacts.length === 0) {
-    res.status(404).json({ message: "Not found " });
-    return;
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    return res.status(400).json({ message: "Not found" });
   }
   if (!body.name && !body.email) {
     res.status(400).json({ message: "missing fields" });
@@ -88,9 +95,22 @@ async function validateUpdate(req, res, next) {
   next();
 }
 
+async function validateFavorite(req, res, next) {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    return res.status(404).json({ message: "Not found" });
+  }
+  if (!favorite) {
+    return res.status(400).json({ message: "missing field favorite" });
+  }
+  next();
+}
+
 module.exports = {
   validateGetById,
   validatePost,
   validateDelete,
   validateUpdate,
+  validateFavorite,
 };

@@ -1,15 +1,15 @@
-const fs = require("fs/promises");
-const { nanoid } = require("nanoid");
-
-const path = require("path");
-
-const contactsPath = path.join("models", "contacts.json");
+const {
+  getAll,
+  getById,
+  add,
+  update,
+  remove,
+} = require("../service/contactsService");
 
 const listContacts = async (req, res) => {
   try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-    res.send(contacts);
+    const data = await getAll();
+    res.send(data);
   } catch (error) {
     return console.log(error);
   }
@@ -17,56 +17,53 @@ const listContacts = async (req, res) => {
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  return fs.readFile(contactsPath, "utf-8").then((data) => {
-    const contacts = JSON.parse(data).filter((elem) => elem.id === contactId);
-    res.send(contacts);
-  });
-};
 
-const removeContact = async (req, res) => {
-  const { contactId } = req.params;
-
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data);
-  const contactToDel = contacts.find((elem) => elem.id === contactId);
-  contacts.splice(contacts.indexOf(contactToDel), 1);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts));
-  res.status(200).json({ message: "contact deleted" });
+  const data = await getById(contactId);
+  res.send(data);
 };
 
 const addContact = async (req, res) => {
   const { name, email, phone } = req.body;
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data);
   const contact = {
-    id: nanoid(),
     name: name,
     email: email,
     phone: phone,
   };
-  contacts.push(contact);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts));
-  res.status(201).json(contact);
+  const data = await add(contact);
+  res.status(201).json(data);
+};
+
+const removeContact = async (req, res) => {
+  const { contactId } = req.params;
+  await remove(contactId);
+  res.status(200).json({ message: "contact deleted" });
 };
 
 const updateContact = async (req, res) => {
   const { body } = req;
   const { contactId } = req.params;
-  const data = await fs.readFile(contactsPath, "utf-8");
-  const contacts = JSON.parse(data);
-  const contactToEdit = contacts.find((elem) => elem.id === contactId);
-  const editedContact = contactToEdit;
-  if (body.name) {
-    editedContact.name = body.name;
-  } else if (body.email) {
-    editedContact.email = body.email;
-  } else if (body.phone) {
-    editedContact.phone = body.phone;
-  }
-  contacts.splice(contacts.indexOf(contactToEdit), 1, editedContact);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts));
 
-  res.send(editedContact);
+  const contactToEdit = await getById(contactId);
+
+  const updatedContact = {
+    name: body.name || contactToEdit.name,
+    email: body.email || contactToEdit.email,
+    phone: body.phone || contactToEdit.phone,
+  };
+
+  const result = await update(contactId, updatedContact);
+
+  res.send(result);
+};
+
+const updateStatusContact = async (req, res) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+  const data = {
+    favorite: favorite,
+  };
+  const result = await update(contactId, data);
+  res.status(200).json(result);
 };
 
 module.exports = {
@@ -75,4 +72,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
 };
