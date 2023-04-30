@@ -3,10 +3,9 @@ const logger = require("morgan");
 const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config();
-
 const app = express();
-
 const contactsRouter = require("./routes/api/contacts");
+const usersRouter = require("./routes/api/users");
 const connection = require("./service/dbConnect");
 const PORT = process.env.PORT || 3000;
 
@@ -18,6 +17,7 @@ app.use(express.json());
 app.use(morgan("tiny"));
 
 app.use("/api/contacts", contactsRouter);
+app.use("/api/users", usersRouter);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Not found" });

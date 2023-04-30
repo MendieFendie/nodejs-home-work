@@ -7,8 +7,9 @@ const {
 } = require("../service/contactsService");
 
 const listContacts = async (req, res) => {
+  const { _id } = req.user;
   try {
-    const data = await getAll();
+    const data = await getAll({ _id });
     res.send(data);
   } catch (error) {
     return console.log(error);
@@ -17,33 +18,36 @@ const listContacts = async (req, res) => {
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-
-  const data = await getById(contactId);
+  const { _id } = req.user;
+  const data = await getById(contactId, _id);
   res.send(data);
 };
 
 const addContact = async (req, res) => {
   const { name, email, phone } = req.body;
+  const { _id } = req.user;
   const contact = {
     name: name,
     email: email,
     phone: phone,
   };
-  const data = await add(contact);
+  const data = await add(contact, _id);
   res.status(201).json(data);
 };
 
 const removeContact = async (req, res) => {
   const { contactId } = req.params;
-  await remove(contactId);
+  const { _id } = req.user;
+  await remove(contactId, _id);
   res.status(200).json({ message: "contact deleted" });
 };
 
 const updateContact = async (req, res) => {
   const { body } = req;
   const { contactId } = req.params;
+  const { _id } = req.user;
 
-  const contactToEdit = await getById(contactId);
+  const contactToEdit = await getById(contactId, _id);
 
   const updatedContact = {
     name: body.name || contactToEdit.name,
@@ -51,7 +55,7 @@ const updateContact = async (req, res) => {
     phone: body.phone || contactToEdit.phone,
   };
 
-  const result = await update(contactId, updatedContact);
+  const result = await update(contactToEdit, updatedContact);
 
   res.send(result);
 };
