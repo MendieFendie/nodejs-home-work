@@ -8,7 +8,9 @@ async function authMiddileware(req, res, next) {
     res.status(401).json({
       message: "Not authorized",
     });
+    return;
   }
+
   const [tokenType, token] = req.headers.authorization.split(" ");
   if (!token) {
     res.status(401).json({
@@ -18,7 +20,7 @@ async function authMiddileware(req, res, next) {
   try {
     const user = jwt.decode(token, process.env.JWT_SECRET);
     req.user = user;
-
+    console.log(user);
     req.token = token;
     next();
   } catch (error) {

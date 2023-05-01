@@ -17,7 +17,8 @@ async function registrationCheck(req, res, next) {
     $or: [{ email: email }],
   });
   if (error) {
-    req.status(400).json(error);
+    res.status(400).json(error.message);
+    return;
   }
 
   if (existingContact) {
@@ -32,7 +33,7 @@ async function loginCheck(req, res, next) {
   const { email, password } = req.body;
   const { error } = registrationValidate.validate({ email, password });
   if (error) {
-    req.status(400).json(error);
+    return res.status(400).json(error.message);
   }
 
   const existingContact = await User.findOne({ email });
