@@ -16,6 +16,10 @@ const {
   validateFavorite,
 } = require("../../validators/validateData");
 
+const authMiddileware = require("../../validators/authMiddileware");
+
+router.use(authMiddileware);
+
 router.get("/", listContacts);
 
 router.get("/:contactId", validateGetById, getContactById);

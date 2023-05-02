@@ -3,22 +3,29 @@ const { Schema } = mongoose;
 
 const Contact = mongoose.model(
   "contacts",
-  new Schema({
-    name: {
-      type: String,
-      required: [true, "Set name for contact"],
+  new Schema(
+    {
+      name: {
+        type: String,
+        required: [true, "Set name for contact"],
+      },
+      email: {
+        type: String,
+      },
+      phone: {
+        type: String,
+      },
+      favorite: {
+        type: Boolean,
+        default: false,
+      },
+      owner: {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+      },
     },
-    email: {
-      type: String,
-    },
-    phone: {
-      type: String,
-    },
-    favorite: {
-      type: Boolean,
-      default: false,
-    },
-  })
+    { versionKey: false }
+  )
 );
 
 module.exports = Contact;
