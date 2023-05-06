@@ -1,12 +1,14 @@
 const User = require("./schemas/authSchema");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const gravatar = require("gravatar");
 require("dotenv").config();
 
 const registration = async (email, password) => {
   const user = new User({
     email,
     password: await bcrypt.hash(password, 10),
+    avatarURL: gravatar.url(email),
   });
   await user.save();
 };
