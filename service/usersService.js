@@ -36,9 +36,14 @@ const currentUser = async (id) => {
   return user;
 };
 
+const updateAvatar = async (id, url) => {
+  await User.findByIdAndUpdate(id, { avatarURL: url });
+};
+
 module.exports = {
   registration,
   login,
   logout,
   currentUser,
+  updateAvatar,
 };

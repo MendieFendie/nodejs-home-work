@@ -4,6 +4,8 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const User = require("../service/schemas/authSchema");
+const { updateAvatar } = require("../service/usersService");
+const { v4: uuidv4 } = require("uuid");
 
 async function avatarController(req, res, next) {
   const [tokenType, token] = req.headers.authorization.split(" ");
@@ -17,23 +19,29 @@ async function avatarController(req, res, next) {
     }
 
     const image = await Jimp.read(req.file.path);
-    image.cover(250, 250).quality(60).write(`tmp/${userId._id}.jpg`);
+    image.cover(250, 250).quality(60);
+
+    const newFileName = `${uuidv4()}.jpg`;
+    const newFilePath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "avatars",
+      newFileName
+    );
+    await image.writeAsync(newFilePath);
 
     const oldAvatarPath = user.avatarURL
       ? path.join(__dirname, "..", "public", user.avatarURL)
       : null;
 
-    const newAvatarPath = `public/avatars/${userId._id}.jpg`;
-    fs.renameSync(`tmp/${userId._id}.jpg`, newAvatarPath);
-
     if (oldAvatarPath && fs.existsSync(oldAvatarPath)) {
       fs.unlinkSync(oldAvatarPath);
     }
 
-    const avatarURL = `/avatars/${userId._id}.jpg`;
+    const avatarURL = `/avatars/${newFileName}`;
 
-    user.avatarURL = avatarURL;
-    await user.save();
+    await updateAvatar(userId, avatarURL);
 
     return res.json({ avatarURL });
   } catch (error) {
