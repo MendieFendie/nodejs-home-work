@@ -1,12 +1,14 @@
 const User = require("./schemas/authSchema");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const gravatar = require("gravatar");
 require("dotenv").config();
 
 const registration = async (email, password) => {
   const user = new User({
     email,
     password: await bcrypt.hash(password, 10),
+    avatarURL: gravatar.url(email),
   });
   await user.save();
 };
@@ -34,9 +36,14 @@ const currentUser = async (id) => {
   return user;
 };
 
+const updateAvatar = async (id, url) => {
+  await User.findByIdAndUpdate(id, { avatarURL: url });
+};
+
 module.exports = {
   registration,
   login,
   logout,
   currentUser,
+  updateAvatar,
 };
